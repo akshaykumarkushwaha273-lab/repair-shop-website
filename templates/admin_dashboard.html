@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - TechFix Pro</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tabler-icons@latest/tabler-icons.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #0f172a; color: #f1f5f9; }
+        .dashboard-container { display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background: #1e293b; border-right: 1px solid #334155; padding: 20px; }
+        .sidebar-header { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; color: #60a5fa; font-weight: 700; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 10px; padding: 12px; color: #cbd5e1; text-decoration: none; border-radius: 6px; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: #334155; color: #60a5fa; }
+        .logout-btn { width:100%; padding:12px; background:#f472b6; border:none; color:white; border-radius:6px; cursor:pointer; font-weight:600; }
+        .main-content { flex:1; padding:30px; }
+        .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; margin-bottom:30px; }
+        .stat-card { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; text-align:center; }
+        .stat-number { font-size:32px; font-weight:700; color:#60a5fa; }
+        .messages-table { background:#1e293b; border:1px solid #334155; border-radius:10px; overflow:auto; }
+        table { width:100%; border-collapse:collapse; }
+        th { background:#334155; padding:15px; text-align:left; }
+        td { padding:15px; border-top:1px solid #334155; }
+        .status-badge { display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+        .status-pending { background:rgba(251,191,36,0.1); color:#fbbf24; }
+        .status-replied { background:rgba(52,211,153,0.1); color:#34d399; }
+        .action-btn { padding:6px 12px; background:#60a5fa; color:white; border:none; border-radius:4px; cursor:pointer; text-decoration:none; display:inline-block; }
+        .delete-btn { background:#f472b6; margin-left:5px; }
+        @media (max-width:768px){ .sidebar{width:200px;} th,td{padding:10px;} }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+    <aside class="sidebar">
+        <div class="sidebar-header"><i class="ti ti-tools"></i><span>TechFix Pro</span></div>
+        <ul class="sidebar-menu">
+            <li><a href="/admin/dashboard" class="active"><i class="ti ti-inbox"></i> Messages</a></li>
+            <li><a href="/"><i class="ti ti-home"></i> Back to Website</a></li>
+        </ul>
+        <form action="/admin/logout" method="GET">
+            <button type="submit" class="logout-btn"><i class="ti ti-logout"></i> Logout</button>
+        </form>
+    </aside>
+    <main class="main-content">
+        <div class="page-header"><h1>📬 Messages</h1></div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-number">{{ pending_count }}</div><div class="stat-label">Pending Messages</div></div>
+            <div class="stat-card"><div class="stat-number">{{ messages|length }}</div><div class="stat-label">Total Messages</div></div>
+        </div>
+        {% if messages %}
+        <div class="messages-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Service</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for msg in messages %}
+                    <tr>
+                        <td><strong>{{ msg.name }}</strong></td>
+                        <td>{{ msg.email }}</td>
+                        <td>{{ msg.service }}</td>
+                        <td><span class="status-badge {% if msg.status == 'pending' %}status-pending{% else %}status-replied{% endif %}">{{ msg.status|upper }}</span></td>
+                        <td>{{ msg.created_at.strftime('%Y-%m-%d') if msg.created_at else 'N/A' }}</td>
+                        <td>
+                            <a href="/admin/message/{{ msg.id }}" class="action-btn">View</a>
+                            <button type="button" class="action-btn delete-btn" data-id="{{ msg.id }}" onclick="deleteMessage(this.dataset.id)">Delete</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:60px;"><i class="ti ti-inbox" style="font-size:48px;"></i><h2>No messages yet</h2><p>When customers contact you, messages will appear here.</p></div>
+        {% endif %}
+    </main>
+</div>
+<script>
+function deleteMessage(id) {
+    if (confirm('Are you sure you want to delete this message?')) {
+        fetch(`/api/admin/delete/${id}`, { method: 'DELETE' })
+            .then(res => res.json())
+            .then(data => { if (data.success) location.reload(); });
+    }
+}
+</script>
+</body>
+</html>
